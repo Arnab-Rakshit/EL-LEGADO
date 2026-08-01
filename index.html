@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EL-LEGADO — Project Legacy | BGMI Esports Academy</title>
+<meta name="description" content="EL-LEGADO: Official Player Selection System, Season 1. 256 applicants. One roster. Legends aren't recruited — they are forged.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0a0c0a;
+    --panel:#12150f;
+    --panel-2:#181c14;
+    --line: rgba(232,228,216,0.09);
+    --bone:#e8e4d8;
+    --bone-dim: rgba(232,228,216,0.62);
+    --gold:#d4a63a;
+    --gold-dim: rgba(212,166,58,0.4);
+    --rust:#b23a2e;
+    --zone:#3e6e5e;
+    --zone-bright:#59a98c;
+    --display: 'Bebas Neue', 'Arial Narrow', sans-serif;
+    --body: 'Barlow', system-ui, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--void);
+    color:var(--bone);
+    font-family:var(--body);
+    overflow-x:hidden;
+    line-height:1.5;
+  }
+
+  /* ambient grid / scanline texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    pointer-events:none;
+    z-index:2;
+    background-image:
+      linear-gradient(rgba(232,228,216,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(232,228,216,0.025) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mix-blend-mode:overlay;
+    opacity:0.5;
+  }
+
+  ::selection{ background:var(--gold); color:var(--void); }
+
+  a{color:inherit;}
+  img{max-width:100%;}
+
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 28px; }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--gold);
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:22px; height:1px; background:var(--gold);
+    display:inline-block;
+  }
+
+  h1,h2,h3,.stencil{ font-family:var(--display); letter-spacing:0.02em; text-transform:uppercase; }
+
+  section{ position:relative; padding:120px 0; }
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position:fixed; top:0; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 28px;
+    background:linear-gradient(to bottom, rgba(10,12,10,0.92), rgba(10,12,10,0));
+    backdrop-filter:blur(2px);
+    transition:background .3s ease;
+  }
+  header.nav .brand{
+    font-family:var(--display);
+    font-size:22px;
+    letter-spacing:0.12em;
+    display:flex; align-items:center; gap:12px;
+  }
+  header.nav .brand span{ color:var(--gold); }
+  .brand-logo{
+    height:40px; width:40px;
+    object-fit:contain;
+    background:#fff;
+    border-radius:10px;
+    padding:3px;
+    box-shadow:0 0 18px rgba(212,166,58,0.25);
+  }
+  footer .brand{ display:flex; align-items:center; gap:10px; }
+  footer .brand-logo{ height:32px; width:32px; }
+  header.nav nav{ display:flex; gap:28px; }
+  header.nav nav a{
+    font-family:var(--mono);
+    font-size:12px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    text-decoration:none;
+    color:var(--bone-dim);
+    transition:color .2s;
+  }
+  header.nav nav a:hover{ color:var(--gold); }
+  .navtoggle{ display:none; }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:100svh;
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    padding-top:80px;
+    overflow:hidden;
+  }
+  .zone-field{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    z-index:0;
+  }
+  .zone-ring{
+    position:absolute;
+    border-radius:50%;
+    border:1px solid var(--zone);
+    opacity:0.35;
+  }
+  .zone-ring.r1{ width:1180px; height:1180px; animation: shrinkPulse 12s ease-in-out infinite; }
+  .zone-ring.r2{ width:860px; height:860px; border-color:var(--gold-dim); animation: shrinkPulse 12s ease-in-out infinite 1s; }
+  .zone-ring.r3{ width:560px; height:560px; opacity:0.5; animation: shrinkPulse 12s ease-in-out infinite 2s; }
+  .zone-ring.r4{ width:300px; height:300px; border-color:var(--rust); opacity:0.55; animation: shrinkPulse 12s ease-in-out infinite 3s; }
+
+  @keyframes shrinkPulse{
+    0%{ transform:scale(1); opacity:0.15; }
+    50%{ transform:scale(0.94); opacity:0.55; }
+    100%{ transform:scale(1); opacity:0.15; }
+  }
+
+  .hero-content{ position:relative; z-index:3; text-align:center; padding:0 20px;}
+  .hero-content .eyebrow{ justify-content:center; margin-bottom:22px; }
+  .hero-content .eyebrow::before{ display:none; }
+  .hero-title{
+    font-size:clamp(58px, 12vw, 148px);
+    line-height:0.92;
+    color:var(--bone);
+    text-shadow: 0 0 60px rgba(212,166,58,0.15);
+  }
+  .hero-title .accent{ color:var(--gold); }
+  .hero-sub{
+    font-family:var(--body);
+    font-style:italic;
+    font-weight:500;
+    font-size:clamp(15px, 2.2vw, 20px);
+    color:var(--bone-dim);
+    margin-top:18px;
+    letter-spacing:0.01em;
+  }
+  .hero-stats{
+    margin-top:56px;
+    display:flex; gap:0;
+    justify-content:center;
+    flex-wrap:wrap;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+  }
+  .hero-stat{
+    padding:18px 32px;
+    border-right:1px solid var(--line);
+    text-align:center;
+  }
+  .hero-stat:last-child{ border-right:none; }
+  .hero-stat .num{
+    font-family:var(--mono); font-weight:700;
+    font-size:28px; color:var(--gold);
+  }
+  .hero-stat .lbl{
+    font-family:var(--mono); font-size:10px;
+    letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--bone-dim); margin-top:4px;
+  }
+
+  .scroll-cue{
+    position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+    font-family:var(--mono); font-size:11px; letter-spacing:0.2em;
+    color:var(--bone-dim); text-transform:uppercase;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    z-index:3;
+  }
+  .scroll-cue .line{ width:1px; height:34px; background:linear-gradient(var(--gold), transparent); animation:cueMove 1.8s ease-in-out infinite; }
+  @keyframes cueMove{ 0%{opacity:0.2;} 50%{opacity:1;} 100%{opacity:0.2;} }
+
+  /* ---------- reveal ---------- */
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .8s ease, transform .8s ease; }
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  /* ---------- SECTION HEADS ---------- */
+  .sec-head{ margin-bottom:56px; max-width:720px; }
+  .sec-head h2{ font-size:clamp(36px,5vw,58px); margin-top:14px; line-height:0.98; }
+  .sec-head p{ color:var(--bone-dim); margin-top:16px; font-size:16px; max-width:600px; }
+
+  /* ---------- OVERVIEW ---------- */
+  .overview-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .ov-card{ background:var(--panel); padding:32px 26px; }
+  .ov-card .k{ font-family:var(--mono); color:var(--gold); font-size:12px; letter-spacing:0.14em; text-transform:uppercase;}
+  .ov-card .v{ font-family:var(--display); font-size:40px; margin-top:10px; }
+  .ov-card .d{ color:var(--bone-dim); font-size:13.5px; margin-top:8px; }
+
+  .philosophy{
+    margin-top:64px;
+    border-left:2px solid var(--gold);
+    padding:6px 0 6px 28px;
+    font-family:var(--body); font-style:italic; font-weight:500;
+    font-size:clamp(18px,2.4vw,24px);
+    color:var(--bone);
+    max-width:760px;
+  }
+
+  /* ---------- ZONE TIMELINE (signature) ---------- */
+  .timeline{ position:relative; }
+  .tl-item{
+    display:grid;
+    grid-template-columns: 220px 1fr;
+    gap:40px;
+    padding:52px 0;
+    border-top:1px solid var(--line);
+    align-items:start;
+  }
+  .tl-item:last-child{ border-bottom:1px solid var(--line); }
+
+  .tl-zone{ position:relative; display:flex; align-items:center; justify-content:center; }
+  .tl-zone .circle{
+    border-radius:50%;
+    border:2px solid var(--zone-bright);
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+    background: radial-gradient(circle at 50% 40%, rgba(62,110,94,0.18), transparent 70%);
+    transition: transform .4s ease;
+  }
+  .tl-item:hover .tl-zone .circle{ transform:scale(1.05); }
+  .tl-zone .circle .n{ font-family:var(--mono); font-weight:700; font-size:26px; color:var(--bone); }
+  .tl-zone .circle .lbl{ font-family:var(--mono); font-size:9.5px; letter-spacing:0.12em; color:var(--zone-bright); text-transform:uppercase; margin-top:2px;}
+
+  .tl-item[data-size="256"] .circle{ width:190px; height:190px; }
+  .tl-item[data-size="192"] .circle{ width:160px; height:160px; }
+  .tl-item[data-size="96"] .circle{ width:125px; height:125px; }
+  .tl-item[data-size="64"] .circle{ width:105px; height:105px; }
+  .tl-item[data-size="8"]  .circle{ width:78px; height:78px; border-color:var(--gold); background:radial-gradient(circle at 50% 40%, rgba(212,166,58,0.22), transparent 70%);}
+  .tl-item[data-size="8"] .circle .n{ color:var(--gold); }
+  .tl-item[data-size="8"] .circle .lbl{ color:var(--gold); }
+
+  .tl-body .stage-tag{ font-family:var(--mono); font-size:11px; color:var(--rust); letter-spacing:0.16em; text-transform:uppercase; }
+  .tl-body h3{ font-size:clamp(26px,3.4vw,36px); margin-top:8px; }
+  .tl-body .desc{ color:var(--bone-dim); margin-top:12px; max-width:640px; font-size:15px;}
+
+  .qual-box{
+    margin-top:22px;
+    display:flex; flex-wrap:wrap; gap:10px;
+  }
+  .qual-chip{
+    font-family:var(--mono); font-size:12px;
+    border:1px solid var(--line);
+    padding:8px 14px;
+    color:var(--bone);
+    background:var(--panel-2);
+  }
+  .qual-chip b{ color:var(--gold); }
+
+  .eval-list{
+    margin-top:18px;
+    display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr));
+    gap:10px 18px;
+  }
+  .eval-list li{
+    list-style:none;
+    font-family:var(--mono); font-size:12.5px;
+    color:var(--bone-dim);
+    padding-left:16px;
+    position:relative;
+  }
+  .eval-list li::before{
+    content:"▸"; position:absolute; left:0; color:var(--zone-bright);
+  }
+
+  /* ---------- CAMP ---------- */
+  .camp-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--line); border:1px solid var(--line);
+    margin-top:10px;
+  }
+  .camp-card{ background:var(--panel); padding:26px 22px; min-height:130px; transition:background .25s; }
+  .camp-card:hover{ background:var(--panel-2); }
+  .camp-card .idx{ font-family:var(--mono); color:var(--rust); font-size:11px; }
+  .camp-card .t{ font-family:var(--body); font-weight:600; font-size:15px; margin-top:10px; }
+
+  /* ---------- ROSTER ---------- */
+  .roster-wrap{
+    display:grid; grid-template-columns:1.1fr 1fr; gap:60px;
+    align-items:center;
+  }
+  .roster-board{
+    border:1px solid var(--line);
+    background:var(--panel);
+    padding:30px;
+  }
+  .roster-board .board-head{
+    display:flex; justify-content:space-between; align-items:baseline;
+    border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:20px;
+  }
+  .roster-board .board-head .t{ font-family:var(--display); font-size:24px; }
+  .roster-board .board-head .n{ font-family:var(--mono); color:var(--gold); font-size:13px; }
+  .slot-row{ display:flex; justify-content:space-between; align-items:center; padding:14px 0; border-bottom:1px dashed var(--line); }
+  .slot-row:last-child{ border-bottom:none; }
+  .slot-row .role{ font-family:var(--mono); font-size:12px; letter-spacing:0.1em; color:var(--bone-dim); text-transform:uppercase;}
+  .slot-row .fill{ font-family:var(--mono); font-size:12px; color:var(--zone-bright); }
+  .slot-row.igl .fill{ color:var(--gold); }
+
+  .roster-copy p{ color:var(--bone-dim); margin-bottom:16px; font-size:15.5px; }
+  .roster-copy .arrow-note{
+    margin-top:26px; padding:18px 20px;
+    border:1px solid var(--gold-dim);
+    background:rgba(212,166,58,0.05);
+    font-family:var(--mono); font-size:13px;
+    display:flex; gap:12px; align-items:flex-start;
+  }
+  .roster-copy .arrow-note b{ color:var(--gold); }
+
+  /* ---------- PRINCIPLES / RULES ---------- */
+  .dossier{
+    border:1px solid var(--line);
+    background:
+      repeating-linear-gradient(transparent, transparent 43px, rgba(232,228,216,0.035) 44px);
+    padding:8px 0;
+  }
+  .rule-row{
+    display:grid; grid-template-columns:60px 1fr;
+    padding:20px 30px;
+    border-bottom:1px solid var(--line);
+    align-items:center;
+  }
+  .rule-row:last-child{ border-bottom:none; }
+  .rule-row .rn{ font-family:var(--mono); color:var(--rust); font-size:13px; }
+  .rule-row .rt{ font-family:var(--body); font-weight:600; font-size:17px; }
+  .rule-row .rt span{ display:block; font-family:var(--body); font-weight:400; font-size:13.5px; color:var(--bone-dim); margin-top:4px; }
+
+  /* ---------- MOTTO ---------- */
+  .motto{
+    text-align:center; padding:160px 0;
+    position:relative;
+  }
+  .motto::before{
+    content:""; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:640px; height:640px; border-radius:50%;
+    border:1px solid var(--gold-dim);
+    opacity:0.4;
+  }
+  .motto h2{
+    position:relative; z-index:2;
+    font-size:clamp(40px, 8vw, 88px);
+    line-height:1.02;
+    max-width:900px; margin:0 auto;
+  }
+  .motto h2 .accent{ color:var(--gold); }
+  .motto .sig{ position:relative; z-index:2; margin-top:26px; font-family:var(--mono); letter-spacing:0.2em; text-transform:uppercase; font-size:12px; color:var(--bone-dim); }
+
+  /* ---------- JOIN / FOOTER ---------- */
+  .join{
+    display:flex; justify-content:space-between; align-items:center; gap:40px; flex-wrap:wrap;
+    padding:56px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line);
+  }
+  .join h3{ font-size:clamp(30px,4vw,44px); max-width:520px; }
+  .btn{
+    display:inline-flex; align-items:center; gap:10px;
+    font-family:var(--mono); font-size:13px; letter-spacing:0.12em; text-transform:uppercase;
+    color:var(--void); background:var(--gold);
+    padding:16px 30px; text-decoration:none;
+    border:1px solid var(--gold);
+    transition:background .2s, color .2s;
+    white-space:nowrap;
+  }
+  .btn:hover{ background:transparent; color:var(--gold); }
+
+  .whatsapp-band{
+    padding:56px 0;
+    border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; align-items:center; gap:30px; flex-wrap:wrap;
+  }
+  .whatsapp-band .wa-copy .eyebrow{ margin-bottom:10px; }
+  .whatsapp-band .wa-copy h3{ font-size:clamp(26px,3.6vw,38px); max-width:480px; }
+  .whatsapp-band .wa-copy p{ color:var(--bone-dim); margin-top:10px; font-size:14.5px; max-width:460px; }
+  .btn-wa{
+    display:inline-flex; align-items:center; gap:12px;
+    font-family:var(--mono); font-size:13px; letter-spacing:0.1em; text-transform:uppercase;
+    color:var(--void); background:var(--zone-bright);
+    padding:16px 28px; text-decoration:none;
+    border:1px solid var(--zone-bright);
+    transition:background .2s, color .2s;
+    white-space:nowrap;
+  }
+  .btn-wa:hover{ background:transparent; color:var(--zone-bright); }
+  .btn-wa svg{ width:18px; height:18px; fill:currentColor; }
+
+  footer{ padding:40px 0 60px; }
+  footer .foot-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; }
+  footer .brand{ font-family:var(--display); font-size:20px; letter-spacing:0.1em; }
+  footer .brand span{ color:var(--gold); }
+  footer .meta{ font-family:var(--mono); font-size:11px; color:var(--bone-dim); letter-spacing:0.05em; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:900px){
+    .overview-grid, .camp-grid{ grid-template-columns:repeat(2,1fr); }
+    .roster-wrap{ grid-template-columns:1fr; }
+    .tl-item{ grid-template-columns:1fr; }
+    .tl-zone{ justify-content:flex-start; margin-bottom:10px;}
+  }
+  @media (max-width:600px){
+    header.nav nav{ display:none; }
+    section{ padding:80px 0; }
+    .overview-grid, .camp-grid{ grid-template-columns:1fr; }
+    .hero-stat{ padding:14px 18px; }
+    .rule-row{ grid-template-columns:40px 1fr; padding:16px 18px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="brand"><img class="brand-logo" src="logo.jpg" alt="El-Legado logo">EL<span>-</span>LEGADO</div>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#selection">Selection</a>
+    <a href="#camp">Camp</a>
+    <a href="#roster">Roster</a>
+    <a href="#rules">Rules</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="zone-field" aria-hidden="true">
+    <div class="zone-ring r1"></div>
+    <div class="zone-ring r2"></div>
+    <div class="zone-ring r3"></div>
+    <div class="zone-ring r4"></div>
+  </div>
+  <div class="hero-content">
+    <div class="eyebrow">Official Player Selection System — Season 1</div>
+    <h1 class="hero-title">EL<span class="accent">-</span>LEGADO</h1>
+    <p class="hero-sub">"Forging champions from the forgotten."</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">256</div><div class="lbl">Applicants</div></div>
+      <div class="hero-stat"><div class="num">4</div><div class="lbl">Groups</div></div>
+      <div class="hero-stat"><div class="num">5</div><div class="lbl">Stages</div></div>
+      <div class="hero-stat"><div class="num">8</div><div class="lbl">Roster Spots</div></div>
+    </div>
+  </div>
+  <div class="scroll-cue"><span>Scroll</span><span class="line"></span></div>
+</section>
+
+<!-- OVERVIEW -->
+<section id="overview">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Overview</div>
+      <h2>One roster.<br>Built from nothing.</h2>
+      <p>EL-LEGADO exists to build a single elite BGMI roster capable of competing in official esports tournaments — assembled not from reputation or recruitment, but from proof, match by match.</p>
+    </div>
+
+    <div class="overview-grid reveal">
+      <div class="ov-card">
+        <div class="k">Applicants</div>
+        <div class="v">256</div>
+        <div class="d">Every player accepted into Season 1 begins with a clean slate.</div>
+      </div>
+      <div class="ov-card">
+        <div class="k">Structure</div>
+        <div class="v">4 × 64</div>
+        <div class="d">4 groups of 64 players, split into 16 squads of 4 per group.</div>
+      </div>
+      <div class="ov-card">
+        <div class="k">Objective</div>
+        <div class="v">1 Roster</div>
+        <div class="d">A single competitive lineup, ready for official tournament play.</div>
+      </div>
+      <div class="ov-card">
+        <div class="k">Philosophy</div>
+        <div class="v">Merit</div>
+        <div class="d">Performance over reputation. Every stage is more competitive than the last.</div>
+      </div>
+    </div>
+
+    <div class="philosophy reveal">
+      "Every player starts with an equal opportunity — and every stage becomes more competitive."
+    </div>
+  </div>
+</section>
+
+<!-- SELECTION PROCESS -->
+<section id="selection">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Selection Process</div>
+      <h2>The zone always shrinks.</h2>
+      <p>Five stages, one shrinking circle of contenders — 256 down to 8. Nothing about a player's starting group decides where they finish. Only results do.</p>
+    </div>
+
+    <div class="timeline">
+
+      <div class="tl-item reveal" data-size="256">
+        <div class="tl-zone"><div class="circle"><span class="n">256</span><span class="lbl">Players</span></div></div>
+        <div class="tl-body">
+          <div class="stage-tag">Registration Phase</div>
+          <h3>Phase 0 — The Field</h3>
+          <p class="desc">256 players are selected from all applications and divided into 4 groups of 64. Each group forms 16 squads of 4 players. Every player begins with a clean slate — no seniority, no reputation, no shortcuts.</p>
+        </div>
+      </div>
+
+      <div class="tl-item reveal" data-size="192">
+        <div class="tl-zone"><div class="circle"><span class="n">192</span><span class="lbl">Advance</span></div></div>
+        <div class="tl-body">
+          <div class="stage-tag">Phase 1</div>
+          <h3>Squad Qualification</h3>
+          <p class="desc">Players compete in their assigned squads. Rankings are based on official tournament points and overall performance.</p>
+          <div class="qual-box">
+            <div class="qual-chip"><b>Top 32 squads</b> (128 players) qualify automatically</div>
+            <div class="qual-chip"><b>64 wildcards</b> from the bottom 32 squads, on personal stats</div>
+            <div class="qual-chip">Wildcards must include the <b>top 16 IGLs</b> from eliminated squads</div>
+          </div>
+          <p class="desc" style="margin-top:16px;">Total qualified: <b style="color:var(--gold)">192 players</b>. All others are eliminated.</p>
+        </div>
+      </div>
+
+      <div class="tl-item reveal" data-size="96">
+        <div class="tl-zone"><div class="circle"><span class="n">96</span><span class="lbl">Advance</span></div></div>
+        <div class="tl-body">
+          <div class="stage-tag">Phase 2</div>
+          <h3>Individual Ranking</h3>
+          <p class="desc">Team results no longer decide a player's fate. Every player is now judged on their own merit.</p>
+          <ul class="eval-list">
+            <li>Combat Efficiency</li><li>Damage Output</li><li>Survival</li><li>Rotation</li>
+            <li>Utility Usage</li><li>Communication</li><li>Decision Making</li><li>Consistency</li>
+          </ul>
+          <div class="qual-box">
+            <div class="qual-chip"><b>Top 96</b> individual players qualify</div>
+            <div class="qual-chip"><b>Top 24 IGLs</b> remain eligible to continue</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item reveal" data-size="64">
+        <div class="tl-zone"><div class="circle"><span class="n">64</span><span class="lbl">Advance</span></div></div>
+        <div class="tl-body">
+          <div class="stage-tag">Phase 3</div>
+          <h3>Solo Assessment</h3>
+          <p class="desc">Pure individual skill, under pressure, alone. No teammates to cover a mistake.</p>
+          <ul class="eval-list">
+            <li>Mechanical Skill</li><li>Game Sense</li><li>Positioning</li>
+            <li>Clutch Ability</li><li>Adaptability</li><li>Survival</li>
+          </ul>
+          <div class="qual-box">
+            <div class="qual-chip"><b>Top 48 players</b> advance</div>
+            <div class="qual-chip"><b>Top 16 IGLs</b> advance</div>
+          </div>
+          <p class="desc" style="margin-top:16px;">Total remaining: <b style="color:var(--gold)">64 players</b> enter the Development Camp.</p>
+        </div>
+      </div>
+
+      <div class="tl-item reveal" data-size="8">
+        <div class="tl-zone"><div class="circle"><span class="n">8</span><span class="lbl">Roster</span></div></div>
+        <div class="tl-body">
+          <div class="stage-tag">Final Selection</div>
+          <h3>The Official Roster</h3>
+          <p class="desc">After two weeks in the Development Camp, one last evaluation decides who becomes EL-LEGADO's official competitive lineup: 2 In-Game Leaders and 6 Elite Players.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- DEVELOPMENT CAMP -->
+<section id="camp">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Development Camp — 2 Weeks</div>
+      <h2>64 players. One last forge.</h2>
+      <p>Before the final roster is named, the remaining 64 players enter an intensive daily training program. Performance is monitored every single day.</p>
+    </div>
+    <div class="camp-grid reveal">
+      <div class="camp-card"><div class="idx">01</div><div class="t">Aim &amp; Recoil Training</div></div>
+      <div class="camp-card"><div class="idx">02</div><div class="t">Team Deathmatch Sessions</div></div>
+      <div class="camp-card"><div class="idx">03</div><div class="t">Custom Room Scrims</div></div>
+      <div class="camp-card"><div class="idx">04</div><div class="t">Tournament Simulations</div></div>
+      <div class="camp-card"><div class="idx">05</div><div class="t">VOD Analysis</div></div>
+      <div class="camp-card"><div class="idx">06</div><div class="t">Communication Drills</div></div>
+      <div class="camp-card"><div class="idx">07</div><div class="t">Role-Based Coaching</div></div>
+      <div class="camp-card"><div class="idx">08</div><div class="t">Mental &amp; Decision-Making Exercises</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ROSTER -->
+<section id="roster">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Final Selection</div>
+      <h2>The main lineup — and the pipeline behind it.</h2>
+    </div>
+
+    <div class="roster-wrap reveal">
+      <div class="roster-board">
+        <div class="board-head">
+          <div class="t">Main Roster</div>
+          <div class="n">8 Players</div>
+        </div>
+        <div class="slot-row igl"><div class="role">In-Game Leader</div><div class="fill">Slot 01</div></div>
+        <div class="slot-row igl"><div class="role">In-Game Leader</div><div class="fill">Slot 02</div></div>
+        <div class="slot-row"><div class="role">Elite Player</div><div class="fill">Slot 03</div></div>
+        <div class="slot-row"><div class="role">Elite Player</div><div class="fill">Slot 04</div></div>
+        <div class="slot-row"><div class="role">Elite Player</div><div class="fill">Slot 05</div></div>
+        <div class="slot-row"><div class="role">Elite Player</div><div class="fill">Slot 06</div></div>
+        <div class="slot-row"><div class="role">Elite Player</div><div class="fill">Slot 07</div></div>
+        <div class="slot-row"><div class="role">Elite Player</div><div class="fill">Slot 08</div></div>
+      </div>
+
+      <div class="roster-copy">
+        <p>This becomes the official EL-LEGADO competitive roster — the lineup that represents the academy in official tournament play.</p>
+        <p>Players who don't make the main lineup are not released. They become part of the <b style="color:var(--gold)">EL-LEGADO Academy</b>, continuing to practice, compete, and improve.</p>
+        <div class="arrow-note">
+          <span>⬆</span>
+          <div><b>No position is permanent.</b> If an Academy player consistently outperforms a member of the Main Roster during official evaluations, scrims, or challenge matches, they earn promotion to the Main Team.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES / PRINCIPLES -->
+<section id="rules">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Rules of Engagement</div>
+      <h2>Core principles.</h2>
+      <p>Every rule below applies equally to every player, at every stage, with no exceptions made for reputation.</p>
+    </div>
+
+    <div class="dossier reveal">
+      <div class="rule-row">
+        <div class="rn">I.</div>
+        <div class="rt">Performance over popularity <span>Your name means nothing here. Your points do.</span></div>
+      </div>
+      <div class="rule-row">
+        <div class="rn">II.</div>
+        <div class="rt">Discipline over talent <span>Raw skill gets you noticed. Discipline gets you selected.</span></div>
+      </div>
+      <div class="rule-row">
+        <div class="rn">III.</div>
+        <div class="rt">Growth over excuses <span>Every stage is designed to expose weaknesses so they can be fixed.</span></div>
+      </div>
+      <div class="rule-row">
+        <div class="rn">IV.</div>
+        <div class="rt">Every match matters <span>There is no phase where results don't count.</span></div>
+      </div>
+      <div class="rule-row">
+        <div class="rn">V.</div>
+        <div class="rt">Every player can earn their place <span>Wildcards, IGL protections, and Academy promotions all exist for this reason.</span></div>
+      </div>
+      <div class="rule-row">
+        <div class="rn">VI.</div>
+        <div class="rt">No roster spot is guaranteed <span>Not for the finalists. Not for the Main Roster. Not ever.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MOTTO -->
+<section class="motto">
+  <h2>Legends aren't <span class="accent">recruited.</span><br>They are <span class="accent">forged.</span></h2>
+  <div class="sig">— El-Legado, Season 1</div>
+</section>
+
+<!-- JOIN / FOOTER -->
+<div class="wrap">
+  <div class="join reveal">
+    <h3>Applications for Season 1 are open to 256 players.</h3>
+    <a class="btn" href="#overview">View Requirements ↑</a>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="whatsapp-band reveal">
+    <div class="wa-copy">
+      <div class="eyebrow">Community</div>
+      <h3>Join the El-Legado WhatsApp group</h3>
+      <p>Get selection updates, tryout schedules, and results straight from the academy.</p>
+    </div>
+    
+    <a class="btn-wa" href="https://chat.whatsapp.com/KnoJyPJKe017GfsbWhykaS?s=sw&p=a&ilr=0" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M20.52 3.449C18.24 1.245 15.24 0 12.045 0 5.463 0 .104 5.36.104 11.943c0 2.104.549 4.16 1.595 5.98L0 24l6.223-1.632a11.9 11.9 0 0 0 5.815 1.482h.005c6.582 0 11.943-5.36 11.943-11.943 0-3.19-1.245-6.19-3.466-8.458zM12.043 21.785h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.694.969.986-3.6-.235-.371a9.86 9.86 0 0 1-1.51-5.248c0-5.45 4.436-9.885 9.89-9.885 2.64 0 5.122 1.03 6.988 2.898a9.82 9.82 0 0 1 2.893 6.994c0 5.45-4.436 9.885-9.892 9.885z"/></svg>
+      Join WhatsApp Group
+    </a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap foot-row">
+    <div class="brand"><img class="brand-logo" src="logo.jpg" alt="El-Legado logo">EL<span>-</span>LEGADO</div>
+    <div class="meta">PROJECT LEGACY · SEASON 1 · BGMI ESPORTS ACADEMY</div>
+  </div>
+</footer>
+
+<script>
+  // scroll reveal
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+  // nav background on scroll
+  const nav = document.querySelector('header.nav');
+  window.addEventListener('scroll', ()=>{
+    if(window.scrollY > 40){
+      nav.style.background = 'linear-gradient(to bottom, rgba(10,12,10,0.96), rgba(10,12,10,0.85))';
+      nav.style.borderBottom = '1px solid rgba(232,228,216,0.09)';
+    } else {
+      nav.style.background = 'linear-gradient(to bottom, rgba(10,12,10,0.92), rgba(10,12,10,0))';
+      nav.style.borderBottom = 'none';
+    }
+  });
+</script>
+
+</body>
+</html>
